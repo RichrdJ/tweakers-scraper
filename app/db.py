@@ -22,6 +22,7 @@ def init_db() -> None:
                 id               INTEGER PRIMARY KEY AUTOINCREMENT,
                 name             TEXT    NOT NULL,
                 url              TEXT    NOT NULL,
+                keyword          TEXT    NOT NULL DEFAULT '',
                 interval_minutes INTEGER NOT NULL DEFAULT 5,
                 active           INTEGER NOT NULL DEFAULT 1,
                 last_run         TEXT,
@@ -48,6 +49,10 @@ def init_db() -> None:
                 value TEXT
             );
         ''')
+        # Migrate: add keyword column if absent (idempotent)
+        cols = [r[1] for r in conn.execute('PRAGMA table_info(searches)').fetchall()]
+        if 'keyword' not in cols:
+            conn.execute("ALTER TABLE searches ADD COLUMN keyword TEXT NOT NULL DEFAULT ''")
     logger.info('Database initialised at %s', DB_PATH)
 
 

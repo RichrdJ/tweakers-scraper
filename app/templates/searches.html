@@ -16,11 +16,16 @@
           <label class="form-label small fw-medium">{{ t.search_name }}</label>
           <input type="text" name="name" class="form-control" placeholder="iPhone 13" required>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label small fw-medium">{{ t.search_url }}</label>
           <input type="url" name="url" class="form-control"
-                 placeholder="https://tweakers.net/aanbod/zoeken/?keyword=iphone" required>
+                 placeholder="https://tweakers.net/aanbod/zoeken/..." required>
           <div class="form-text">{{ t.search_url_help }}</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-medium">{{ t.search_keyword }}</label>
+          <input type="text" name="keyword" class="form-control" placeholder="rtx 4080">
+          <div class="form-text">{{ t.search_keyword_help }}</div>
         </div>
         <div class="col-md-2">
           <label class="form-label small fw-medium">{{ t.search_interval }}</label>
@@ -67,6 +72,9 @@
           <tr>
             <td>
               <div class="fw-semibold">{{ s.name }}</div>
+              {% if s.keyword %}
+                <div class="small"><span class="badge" style="background:var(--tw-orange)">{{ s.keyword }}</span></div>
+              {% endif %}
               <div class="text-muted small text-truncate" style="max-width:300px">{{ s.url }}</div>
             </td>
             <td>
@@ -98,6 +106,7 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary"
                         data-bs-toggle="modal" data-bs-target="#editModal"
                         data-id="{{ s.id }}" data-name="{{ s.name }}"
+                        data-keyword="{{ s.keyword }}"
                         data-interval="{{ s.interval_minutes }}">
                   <i class="bi bi-pencil"></i> {{ t.search_edit }}
                 </button>
@@ -143,6 +152,11 @@
             <input type="text" name="name" id="editName" class="form-control" required>
           </div>
           <div class="mb-3">
+            <label class="form-label">{{ t.search_keyword }}</label>
+            <input type="text" name="keyword" id="editKeyword" class="form-control" placeholder="rtx 4080">
+            <div class="form-text">{{ t.search_keyword_help }}</div>
+          </div>
+          <div class="mb-3">
             <label class="form-label">{{ t.search_edit_interval }}</label>
             <input type="number" name="interval" id="editInterval" class="form-control" min="1" max="1440">
           </div>
@@ -183,6 +197,7 @@
   document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
     var btn = e.relatedTarget;
     document.getElementById('editName').value     = btn.dataset.name;
+    document.getElementById('editKeyword').value  = btn.dataset.keyword || '';
     document.getElementById('editInterval').value = btn.dataset.interval;
     document.getElementById('editForm').action    = '/searches/' + btn.dataset.id + '/edit';
   });

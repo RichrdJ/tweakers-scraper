@@ -117,6 +117,8 @@ def add_search():
     except ValueError:
         interval = 5
 
+    keyword = request.form.get('keyword', '').strip()
+
     if not name or not url:
         flash(t['flash_name_url_required'], 'danger')
         return redirect(url_for('searches'))
@@ -127,8 +129,8 @@ def add_search():
 
     with get_conn() as conn:
         conn.execute(
-            'INSERT INTO searches (name, url, interval_minutes, active) VALUES (?, ?, ?, 1)',
-            (name, url, interval),
+            'INSERT INTO searches (name, url, keyword, interval_minutes, active) VALUES (?, ?, ?, ?, 1)',
+            (name, url, keyword, interval),
         )
 
     flash(t['flash_search_added'].format(name), 'success')
@@ -138,7 +140,8 @@ def add_search():
 @app.route('/searches/<int:sid>/edit', methods=['POST'])
 def edit_search(sid: int):
     t = _t()
-    name = request.form.get('name', '').strip()
+    name    = request.form.get('name',    '').strip()
+    keyword = request.form.get('keyword', '').strip()
     try:
         interval = max(1, int(request.form.get('interval', 5)))
     except ValueError:
@@ -150,8 +153,8 @@ def edit_search(sid: int):
 
     with get_conn() as conn:
         conn.execute(
-            'UPDATE searches SET name = ?, interval_minutes = ? WHERE id = ?',
-            (name, interval, sid),
+            'UPDATE searches SET name = ?, keyword = ?, interval_minutes = ? WHERE id = ?',
+            (name, keyword, interval, sid),
         )
 
     flash(t['flash_search_updated'], 'success')

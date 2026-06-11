@@ -69,7 +69,7 @@ def _run_search(search: dict) -> None:
     url  = search['url']
     logger.info('Running search "%s" (%s)', name, url)
 
-    items     = fetch_listings(url)
+    items     = fetch_listings(url, search.get('keyword', ''))
     new_items = _store(sid, items)
 
     with get_conn() as conn:

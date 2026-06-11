@@ -2,7 +2,7 @@ import re
 import logging
 import requests
 import xml.etree.ElementTree as ET
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -24,26 +24,6 @@ def validate_url(url: str) -> bool:
         return p.scheme in ('http', 'https') and 'tweakers.net' in p.netloc
     except Exception:
         return False
-
-
-def _extract_keywords(url: str) -> list[str]:
-    """Return a list of lowercase keywords derived from the search URL."""
-    parsed = urlparse(url)
-    qs = parse_qs(parsed.query)
-
-    # ?keyword=rtx+4080 → ['rtx', '4080']
-    if 'keyword' in qs:
-        raw = qs['keyword'][0].lower()
-        return [k for k in re.split(r'[+\s]+', raw) if k]
-
-    # /serie/ID/slug/aanbod/  →  slug words
-    # e.g. /serie/1098/iphone/aanbod/ → ['iphone']
-    m = re.search(r'/(?:serie/\d+/|[^/]+/[^/]+/)([a-z0-9][^/]+)/(?:aanbod|vergelijken)', parsed.path)
-    if m:
-        slug = m.group(1).lower().replace('-', ' ')
-        return [k for k in slug.split() if k]
-
-    return []
 
 
 def _parse_price(raw_title: str) -> str:
@@ -95,8 +75,9 @@ def _parse_item(el) -> dict | None:
     }
 
 
-def fetch_listings(url: str) -> list[dict]:
-    keywords = _extract_keywords(url)
+def fetch_listings(url: str, keyword: str = '') -> list[dict]:
+    """Fetch RSS feed and filter by keyword (space-separated terms, all must match)."""
+    terms = [t.lower() for t in keyword.split() if t]
 
     try:
         r = requests.get(RSS_URL, headers=HEADERS, timeout=15)
@@ -117,15 +98,14 @@ def fetch_listings(url: str) -> list[dict]:
         if item is None:
             continue
 
-        if keywords:
+        if terms:
             haystack = f"{item['title']} {item['_desc']} {item['_category']}".lower()
-            if not any(kw in haystack for kw in keywords):
+            if not all(t in haystack for t in terms):
                 continue
 
-        # remove internal-only fields before storing
         item.pop('_category', None)
         item.pop('_desc', None)
         items.append(item)
 
-    logger.info('RSS: %d item(s) matched (keywords: %s)', len(items), keywords or ['all'])
+    logger.info('RSS: %d item(s) matched (keyword: "%s")', len(items), keyword or '*')
     return items
