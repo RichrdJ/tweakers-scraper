@@ -1,10 +1,12 @@
 import re
 import logging
 import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+import xml.etree.ElementTree as ET
+from urllib.parse import urlparse, parse_qs
 
 logger = logging.getLogger(__name__)
+
+RSS_URL = 'https://tweakers.net/feeds/va.xml'
 
 HEADERS = {
     'User-Agent': (
@@ -13,7 +15,6 @@ HEADERS = {
         'Chrome/120.0.0.0 Safari/537.36'
     ),
     'Accept-Language': 'nl-NL,nl;q=0.9',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 }
 
 
@@ -25,94 +26,106 @@ def validate_url(url: str) -> bool:
         return False
 
 
-def _larger_thumb(url: str) -> str:
-    """Swap the 84x63 thumbnail size for a larger 400x300 variant."""
-    return re.sub(r'/\d+x\d+/', '/400x300/', url) if url else url
+def _extract_keywords(url: str) -> list[str]:
+    """Return a list of lowercase keywords derived from the search URL."""
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+
+    # ?keyword=rtx+4080 → ['rtx', '4080']
+    if 'keyword' in qs:
+        raw = qs['keyword'][0].lower()
+        return [k for k in re.split(r'[+\s]+', raw) if k]
+
+    # /serie/ID/slug/aanbod/  →  slug words
+    # e.g. /serie/1098/iphone/aanbod/ → ['iphone']
+    m = re.search(r'/(?:serie/\d+/|[^/]+/[^/]+/)([a-z0-9][^/]+)/(?:aanbod|vergelijken)', parsed.path)
+    if m:
+        slug = m.group(1).lower().replace('-', ' ')
+        return [k for k in slug.split() if k]
+
+    return []
+
+
+def _parse_price(raw_title: str) -> str:
+    """Extract price string from RSS title like 'A: Item naam - € 45,-'"""
+    m = re.search(r'\s+[-–]\s+(€\s*[\d.,]+[-,]?|N\.o\.t\.k\.|Gratis|[A-Z][^\-–]*)$', raw_title)
+    return m.group(1).strip() if m else ''
+
+
+def _parse_title(raw_title: str) -> str:
+    """Strip 'A: ' prefix and ' - price' suffix."""
+    body = re.sub(r'^[AV]:\s*', '', raw_title.strip())
+    body = re.sub(r'\s+[-–]\s+(€\s*[\d.,]+[-,]?|N\.o\.t\.k\.|Gratis|[A-Z][^\-–]*)$', '', body)
+    return body.strip()
+
+
+def _parse_item(el) -> dict | None:
+    title_el = el.find('title')
+    link_el  = el.find('link')
+    desc_el  = el.find('description')
+    cat_el   = el.find('category')
+    guid_el  = el.find('guid')
+    auth_el  = el.find('author')
+
+    if title_el is None or link_el is None:
+        return None
+
+    raw = (title_el.text or '').strip()
+    if not raw.startswith('A:'):    # skip 'V:' (Vraag) items
+        return None
+
+    link = (link_el.text or '').strip()
+    guid = (guid_el.text if guid_el is not None else '') or link
+
+    m = re.search(r'/aanbod/(\d+)', guid + link)
+    if not m:
+        return None
+
+    return {
+        'id':          m.group(1),
+        'title':       _parse_title(raw),
+        'price':       _parse_price(raw),
+        'url':         link,
+        'image_url':   '',
+        'city':        '',
+        'seller':      (auth_el.text or '').strip() if auth_el is not None else '',
+        'reserved':    False,
+        '_category':   (cat_el.text or '').strip()  if cat_el  is not None else '',
+        '_desc':       (desc_el.text or '').strip() if desc_el is not None else '',
+    }
 
 
 def fetch_listings(url: str) -> list[dict]:
-    """Fetch and parse listings from a Tweakers V&A search page."""
+    keywords = _extract_keywords(url)
+
     try:
-        r = requests.get(url, headers=HEADERS, timeout=15)
+        r = requests.get(RSS_URL, headers=HEADERS, timeout=15)
         r.raise_for_status()
     except Exception as e:
-        logger.error('Failed to fetch %s: %s', url, e)
+        logger.error('RSS fetch failed: %s', e)
         return []
 
-    soup = BeautifulSoup(r.text, 'lxml')
-    table = soup.find('table', class_='valisting')
-    if not table:
-        logger.warning('No listing table found at %s', url)
+    try:
+        root = ET.fromstring(r.content)
+    except Exception as e:
+        logger.error('RSS parse failed: %s', e)
         return []
 
     items = []
-    seen: set[str] = set()
-
-    for row in table.find_all('tr'):
-        title_cell = row.find('p', class_='title')
-        if not title_cell:
+    for el in root.findall('.//item'):
+        item = _parse_item(el)
+        if item is None:
             continue
 
-        link_tag = title_cell.find('a')
-        if not link_tag:
-            continue
+        if keywords:
+            haystack = f"{item['title']} {item['_desc']} {item['_category']}".lower()
+            if not any(kw in haystack for kw in keywords):
+                continue
 
-        item_url = (link_tag.get('href') or '').strip()
-        title = (link_tag.get('title') or link_tag.get_text(strip=True))
+        # remove internal-only fields before storing
+        item.pop('_category', None)
+        item.pop('_desc', None)
+        items.append(item)
 
-        m = re.search(r'/aanbod/(\d+)/', item_url)
-        if not m:
-            continue
-        item_id = m.group(1)
-
-        if item_id in seen:
-            continue
-        seen.add(item_id)
-
-        # Price
-        price_cell = row.find('td', class_='vaprice')
-        price = ''
-        if price_cell:
-            price = price_cell.get_text(' ', strip=True)
-            # strip duplicate whitespace
-            price = re.sub(r'\s+', ' ', price).strip()
-
-        # City
-        city_cell = row.find('td', class_='city')
-        city = ''
-        if city_cell:
-            p = city_cell.find('p')
-            city = p.get_text(strip=True) if p else city_cell.get_text(strip=True)
-
-        # Seller (gallery link)
-        seller_link = row.find('a', href=re.compile(r'/gallery/\d+/aanbod/'))
-        seller = ''
-        if seller_link:
-            seller = re.sub(r'\s*\(\d+\)\s*$', '', seller_link.get_text(strip=True))
-
-        # Thumbnail — upgrade to larger size for notifications
-        img_cell = row.find('td', class_='pwimage')
-        image_url = ''
-        if img_cell:
-            img = img_cell.find('img')
-            if img:
-                image_url = _larger_thumb(img.get('src', ''))
-
-        # Reserved status
-        reserved = bool(
-            img_cell and 'reserved' in img_cell.get('class', [])
-        )
-
-        items.append({
-            'id': item_id,
-            'title': title,
-            'price': price,
-            'url': item_url,
-            'image_url': image_url,
-            'city': city,
-            'seller': seller,
-            'reserved': reserved,
-        })
-
-    logger.info('Fetched %d items from %s', len(items), url)
+    logger.info('RSS: %d item(s) matched (keywords: %s)', len(items), keywords or ['all'])
     return items
