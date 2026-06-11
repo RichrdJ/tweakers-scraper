@@ -1,5 +1,6 @@
 import logging
 from collections import deque
+from datetime import datetime
 
 _buffer: deque = deque(maxlen=500)
 
@@ -7,7 +8,7 @@ _buffer: deque = deque(maxlen=500)
 class _BufferHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         _buffer.append({
-            'time':    self.formatTime(record, '%H:%M:%S'),
+            'time':    datetime.fromtimestamp(record.created).strftime('%H:%M:%S'),
             'level':   record.levelname,
             'message': record.getMessage(),
         })
