@@ -16,16 +16,16 @@
           <label class="form-label small fw-medium">{{ t.search_name }}</label>
           <input type="text" name="name" class="form-control" placeholder="iPhone 13" required>
         </div>
-        <div class="col-md-4">
-          <label class="form-label small fw-medium">{{ t.search_url }}</label>
-          <input type="url" name="url" class="form-control"
-                 placeholder="https://tweakers.net/aanbod/zoeken/..." required>
-          <div class="form-text">{{ t.search_url_help }}</div>
-        </div>
         <div class="col-md-2">
-          <label class="form-label small fw-medium">{{ t.search_keyword }}</label>
-          <input type="text" name="keyword" class="form-control" placeholder="rtx 4080">
+          <label class="form-label small fw-medium">{{ t.search_keyword }} <span class="text-danger">*</span></label>
+          <input type="text" name="keyword" class="form-control" placeholder="rtx 4080" required>
           <div class="form-text">{{ t.search_keyword_help }}</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-medium">{{ t.search_url }} <span class="text-muted">({{ t.search_url_optional }})</span></label>
+          <input type="text" name="url" class="form-control"
+                 placeholder="https://tweakers.net/aanbod/zoeken/#filter:...">
+          <div class="form-text">{{ t.search_url_help }}</div>
         </div>
         <div class="col-md-2">
           <label class="form-label small fw-medium">{{ t.search_interval }}</label>

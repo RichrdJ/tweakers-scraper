@@ -119,11 +119,14 @@ def add_search():
 
     keyword = request.form.get('keyword', '').strip()
 
-    if not name or not url:
-        flash(t['flash_name_url_required'], 'danger')
+    if not name or not keyword:
+        flash(t['flash_name_keyword_required'], 'danger')
         return redirect(url_for('searches'))
 
-    if not validate_url(url):
+    # Auto-generate URL from keyword if not provided
+    if not url:
+        url = 'https://tweakers.net/aanbod/zoeken/?keyword=' + '+'.join(keyword.split())
+    elif not validate_url(url):
         flash(t['flash_invalid_url'], 'danger')
         return redirect(url_for('searches'))
 
