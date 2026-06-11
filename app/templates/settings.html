@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.settings_title }} — Tweakers Monitor{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 fw-bold mb-0">{{ t.settings_title }}</h1>
+</div>
+
+<form method="post" id="saveForm">
+<div class="row g-4">
+
+  <!-- Discord -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="fw-semibold mb-0">
+            <i class="bi bi-discord me-2" style="color:#5865f2"></i>{{ t.settings_discord }}
+          </h5>
+          <div class="d-flex align-items-center gap-2">
+            {% if not discord_enabled %}
+              <span class="badge bg-secondary">{{ t.settings_paused_badge }}</span>
+            {% endif %}
+            <button type="submit" form="discordToggleForm"
+                    class="btn btn-sm {% if discord_enabled %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+              {% if discord_enabled %}{{ t.settings_pause }}{% else %}{{ t.settings_resume }}{% endif %}
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-medium">{{ t.settings_webhook_url }}</label>
+          <input type="url" name="discord_webhook" class="form-control"
+                 value="{{ discord_webhook }}"
+                 placeholder="https://discord.com/api/webhooks/...">
+        </div>
+        <button type="button" id="testDiscordBtn" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-send me-1"></i>{{ t.settings_test }}
+        </button>
+        <span id="testDiscordResult" class="ms-2 small"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Telegram -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="fw-semibold mb-0">
+            <i class="bi bi-telegram me-2" style="color:#2ca5e0"></i>{{ t.settings_tg }}
+          </h5>
+          <div class="d-flex align-items-center gap-2">
+            {% if not telegram_enabled %}
+              <span class="badge bg-secondary">{{ t.settings_paused_badge }}</span>
+            {% endif %}
+            <button type="submit" form="telegramToggleForm"
+                    class="btn btn-sm {% if telegram_enabled %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+              {% if telegram_enabled %}{{ t.settings_pause }}{% else %}{{ t.settings_resume }}{% endif %}
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-medium">{{ t.settings_tg_token }}</label>
+          <input type="text" name="telegram_token" class="form-control"
+                 value="{{ telegram_token }}" placeholder="123456:ABC-...">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-medium">{{ t.settings_tg_chat }}</label>
+          <input type="text" name="telegram_chat_id" class="form-control"
+                 value="{{ telegram_chat_id }}" placeholder="-100...">
+          <div class="form-text">
+            {{ t.settings_tg_how }}
+            <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a>
+          </div>
+        </div>
+        <button type="button" id="testTgBtn" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-send me-1"></i>{{ t.settings_test }}
+        </button>
+        <span id="testTgResult" class="ms-2 small"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Save button -->
+<div class="mt-4">
+  <button type="submit" class="btn btn-tw px-4">
+    <i class="bi bi-floppy me-2"></i>{{ t.settings_save }}
+  </button>
+</div>
+</form>
+
+<!-- Hidden toggle forms (outside saveForm to avoid nesting) -->
+<form id="discordToggleForm"  method="post" action="/settings/toggle/discord"></form>
+<form id="telegramToggleForm" method="post" action="/settings/toggle/telegram"></form>
+
+<!-- Language -->
+<div class="card mt-4">
+  <div class="card-body">
+    <h5 class="fw-semibold mb-3"><i class="bi bi-translate me-2"></i>{{ t.settings_language }}</h5>
+    <div class="d-flex gap-2">
+      <form method="post" action="/settings/language/nl">
+        <button type="submit" class="btn {% if lang == 'nl' %}btn-tw{% else %}btn-outline-secondary{% endif %}">
+          🇳🇱 Nederlands
+        </button>
+      </form>
+      <form method="post" action="/settings/language/en">
+        <button type="submit" class="btn {% if lang == 'en' %}btn-tw{% else %}btn-outline-secondary{% endif %}">
+          🇬🇧 English
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var jsSending = {{ t.js_sending | tojson }};
+  var jsSent    = {{ t.js_sent    | tojson }};
+  var jsError   = {{ t.js_error   | tojson }};
+
+  function testEndpoint(btn, resultSpan, endpoint) {
+    btn.disabled = true;
+    resultSpan.textContent = jsSending;
+    resultSpan.style.color = '';
+    fetch(endpoint, {method:'POST'})
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, data:d}; }); })
+      .then(function(res) {
+        if (res.ok) {
+          resultSpan.textContent = '✓ ' + jsSent;
+          resultSpan.style.color = '#a6e3a1';
+        } else {
+          resultSpan.textContent = '✗ ' + jsError + ': ' + (res.data.error || '');
+          resultSpan.style.color = '#f38ba8';
+        }
+      })
+      .catch(function(e) {
+        resultSpan.textContent = '✗ ' + e;
+        resultSpan.style.color = '#f38ba8';
+      })
+      .finally(function() { btn.disabled = false; });
+  }
+
+  document.getElementById('testDiscordBtn').addEventListener('click', function() {
+    testEndpoint(this, document.getElementById('testDiscordResult'), '/api/test/discord');
+  });
+  document.getElementById('testTgBtn').addEventListener('click', function() {
+    testEndpoint(this, document.getElementById('testTgResult'), '/api/test/telegram');
+  });
+</script>
+{% endblock %}

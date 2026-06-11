@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.search_title }} — Tweakers Monitor{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 fw-bold mb-0">{{ t.search_title }}</h1>
+</div>
+
+<!-- Add search -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="fw-semibold mb-3">{{ t.search_add }}</h5>
+    <form method="post" action="/searches/add">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label small fw-medium">{{ t.search_name }}</label>
+          <input type="text" name="name" class="form-control" placeholder="iPhone 13" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-medium">{{ t.search_url }}</label>
+          <input type="url" name="url" class="form-control"
+                 placeholder="https://tweakers.net/aanbod/zoeken/?keyword=iphone" required>
+          <div class="form-text">{{ t.search_url_help }}</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-medium">{{ t.search_interval }}</label>
+          <input type="number" name="interval" class="form-control" value="5" min="1" max="1440">
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button type="submit" class="btn btn-tw w-100">{{ t.search_add_btn }}</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- URL tip -->
+    <div class="mt-3 p-3 rounded small" style="background:var(--bg-tip);border:1px solid var(--border-color)">
+      <strong>{{ t.search_url_tip_title }}</strong>
+      <ul class="mb-0 mt-1">
+        <li><code>https://tweakers.net/aanbod/zoeken/?keyword=rtx+4080</code></li>
+        <li><code>https://tweakers.net/aanbod/zoeken/?keyword=iphone&amp;priceFrom=100&amp;priceTo=400</code></li>
+        <li><code>https://tweakers.net/serie/1098/iphone/aanbod/</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Searches table -->
+<div class="card">
+  <div class="card-body p-0">
+    {% if not searches %}
+      <p class="text-muted text-center py-5 mb-0">{{ t.search_empty }}</p>
+    {% else %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{{ t.search_name }}</th>
+            <th>{{ t.search_active }}</th>
+            <th>{{ t.search_items }}</th>
+            <th>{{ t.search_interval }}</th>
+            <th>{{ t.search_last_run }}</th>
+            <th>{{ t.search_actions }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in searches %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ s.name }}</div>
+              <div class="text-muted small text-truncate" style="max-width:300px">{{ s.url }}</div>
+            </td>
+            <td>
+              {% if s.active %}
+                <span class="badge bg-success">●</span>
+              {% else %}
+                <span class="badge bg-secondary">●</span>
+              {% endif %}
+            </td>
+            <td>{{ s.item_count }}</td>
+            <td>{{ s.interval_minutes }} min</td>
+            <td class="text-muted small">
+              {{ s.last_run | time_ago if s.last_run else t.search_never }}
+            </td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <!-- Pause / Resume -->
+                <form method="post" action="/searches/{{ s.id }}/toggle">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">
+                    {% if s.active %}
+                      <i class="bi bi-pause-fill"></i> {{ t.search_pause }}
+                    {% else %}
+                      <i class="bi bi-play-fill"></i> {{ t.search_resume }}
+                    {% endif %}
+                  </button>
+                </form>
+
+                <!-- Edit -->
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal" data-bs-target="#editModal"
+                        data-id="{{ s.id }}" data-name="{{ s.name }}"
+                        data-interval="{{ s.interval_minutes }}">
+                  <i class="bi bi-pencil"></i> {{ t.search_edit }}
+                </button>
+
+                <!-- Reset -->
+                <form method="post" action="/searches/{{ s.id }}/reset"
+                      data-msg="{{ t.search_reset_confirm }}"
+                      onsubmit="return confirm(this.dataset.msg)">
+                  <button type="submit" class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-arrow-counterclockwise"></i> {{ t.search_reset }}
+                  </button>
+                </form>
+
+                <!-- Delete -->
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                        data-id="{{ s.id }}" data-name="{{ s.name }}">
+                  <i class="bi bi-trash"></i> {{ t.search_delete }}
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Edit modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ t.search_edit_title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" id="editForm" action="/searches/0/edit">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">{{ t.search_edit_name }}</label>
+            <input type="text" name="name" id="editName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ t.search_edit_interval }}</label>
+            <input type="number" name="interval" id="editInterval" class="form-control" min="1" max="1440">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ t.search_edit_cancel }}</button>
+          <button type="submit" class="btn btn-tw">{{ t.search_edit_save }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ t.modal_delete_title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ t.modal_delete_body }} <strong id="deleteName"></strong> {{ t.modal_delete_body2 }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ t.modal_delete_cancel }}</button>
+        <form method="post" id="deleteForm" action="/searches/0/delete">
+          <button type="submit" class="btn btn-danger">{{ t.modal_delete_confirm }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
+    var btn = e.relatedTarget;
+    document.getElementById('editName').value     = btn.dataset.name;
+    document.getElementById('editInterval').value = btn.dataset.interval;
+    document.getElementById('editForm').action    = '/searches/' + btn.dataset.id + '/edit';
+  });
+
+  document.getElementById('deleteModal').addEventListener('show.bs.modal', function(e) {
+    var btn = e.relatedTarget;
+    document.getElementById('deleteName').textContent = btn.dataset.name;
+    document.getElementById('deleteForm').action      = '/searches/' + btn.dataset.id + '/delete';
+  });
+</script>
+{% endblock %}

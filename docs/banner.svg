@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" width="1200" height="280">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f0a05"/>
+      <stop offset="100%" stop-color="#1a1008"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#e8770e"/>
+      <stop offset="50%"  stop-color="#ffaa55"/>
+      <stop offset="100%" stop-color="#e8770e"/>
+    </linearGradient>
+    <linearGradient id="iconGrad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#ffaa55"/>
+      <stop offset="100%" stop-color="#e8770e"/>
+    </linearGradient>
+    <filter id="softglow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="280" fill="url(#bg)"/>
+
+  <!-- Decorative glow circles -->
+  <circle cx="1100" cy="140" r="260" fill="#e8770e" fill-opacity="0.06"/>
+  <circle cx="1200" cy="0"   r="140" fill="#ffaa55" fill-opacity="0.05"/>
+  <circle cx="60"   cy="260" r="180" fill="#e8770e" fill-opacity="0.04"/>
+  <circle cx="900"  cy="280" r="100" fill="#e8770e" fill-opacity="0.03"/>
+
+  <!-- Subtle grid dots -->
+  <g fill="#e8770e" fill-opacity="0.11">
+    <circle cx="820" cy="60"  r="2"/><circle cx="860" cy="60"  r="2"/><circle cx="900" cy="60"  r="2"/><circle cx="940" cy="60"  r="2"/><circle cx="980" cy="60"  r="2"/>
+    <circle cx="820" cy="100" r="2"/><circle cx="860" cy="100" r="2"/><circle cx="900" cy="100" r="2"/><circle cx="940" cy="100" r="2"/><circle cx="980" cy="100" r="2"/>
+    <circle cx="820" cy="140" r="2"/><circle cx="860" cy="140" r="2"/><circle cx="900" cy="140" r="2"/><circle cx="940" cy="140" r="2"/><circle cx="980" cy="140" r="2"/>
+    <circle cx="820" cy="180" r="2"/><circle cx="860" cy="180" r="2"/><circle cx="900" cy="180" r="2"/><circle cx="940" cy="180" r="2"/><circle cx="980" cy="180" r="2"/>
+    <circle cx="820" cy="220" r="2"/><circle cx="860" cy="220" r="2"/><circle cx="900" cy="220" r="2"/><circle cx="940" cy="220" r="2"/><circle cx="980" cy="220" r="2"/>
+  </g>
+
+  <!-- Mock notification cards (right side) -->
+  <rect x="1010" y="48"  width="168" height="58" rx="10" fill="#2a1800" fill-opacity="0.9"/>
+  <rect x="1010" y="48"  width="4"   height="58" rx="2"  fill="#e8770e"/>
+  <rect x="1022" y="60"  width="60"  height="8"  rx="4"  fill="#e8770e" fill-opacity="0.6"/>
+  <rect x="1022" y="74"  width="100" height="6"  rx="3"  fill="#ffffff"  fill-opacity="0.15"/>
+  <rect x="1022" y="86"  width="76"  height="6"  rx="3"  fill="#ffffff"  fill-opacity="0.1"/>
+  <text x="1158" y="66" font-family="sans-serif" font-size="11" fill="#ffaa55" font-weight="600" text-anchor="end">€ 349,-</text>
+
+  <rect x="1010" y="118" width="168" height="58" rx="10" fill="#2a1800" fill-opacity="0.9"/>
+  <rect x="1010" y="118" width="4"   height="58" rx="2"  fill="#ffaa55"/>
+  <rect x="1022" y="130" width="80"  height="8"  rx="4"  fill="#ffaa55" fill-opacity="0.5"/>
+  <rect x="1022" y="144" width="110" height="6"  rx="3"  fill="#ffffff"  fill-opacity="0.15"/>
+  <rect x="1022" y="156" width="65"  height="6"  rx="3"  fill="#ffffff"  fill-opacity="0.1"/>
+  <text x="1158" y="136" font-family="sans-serif" font-size="11" fill="#ffaa55" font-weight="600" text-anchor="end">€ 80,-</text>
+
+  <rect x="1010" y="188" width="168" height="58" rx="10" fill="#2a1800" fill-opacity="0.9"/>
+  <rect x="1010" y="188" width="4"   height="58" rx="2"  fill="#e8770e"/>
+  <rect x="1022" y="200" width="55"  height="8"  rx="4"  fill="#e8770e" fill-opacity="0.6"/>
+  <rect x="1022" y="214" width="95"  height="6"  rx="3"  fill="#ffffff"  fill-opacity="0.15"/>
+  <rect x="1022" y="226" width="70"  height="6"  rx="3"  fill="#ffffff"  fill-opacity="0.1"/>
+  <text x="1158" y="206" font-family="sans-serif" font-size="11" fill="#ffaa55" font-weight="600" text-anchor="end">Gratis</text>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#accent)"/>
+
+  <!-- Search-heart icon (Bootstrap bi-search-heart, scaled ~7x, centred at 118,128) -->
+  <g transform="translate(118,128) scale(7) translate(-8,-8)" fill="url(#iconGrad)" filter="url(#softglow)">
+    <path d="M6.5 8a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+    <path d="M13 6.5C13 3.015 10.484 0 6.5 0S0 3.015 0 6.5 3.015 13 6.5 13c1.752 0 3.329-.67 4.5-1.765l1.5 1.5a.5.5 0 0 0 .707-.707l-1.5-1.5A6.46 6.46 0 0 0 13 6.5M6.5 1C9.98 1 12 3.515 12 6.5S9.98 12 6.5 12 1 9.485 1 6.5 3.02 1 6.5 1"/>
+    <path d="M6.171 9.757c-.585.586-1.272.93-1.67.93-.099 0-.19-.019-.271-.058-.415-.195-.584-.755-.368-1.261.015-.037.032-.071.05-.103l-.02-.01c-.34-.17-.752-.062-.977.27-.154.23-.202.516-.126.783.107.374.437.625.83.647.433.024.83-.17 1.14-.49l.007-.006.004-.005c.15-.158.28-.338.384-.536l.017-.031"/>
+  </g>
+
+  <!-- Notification dot on icon -->
+  <circle cx="150" cy="76" r="11" fill="#f38ba8"/>
+  <text x="150" y="81" font-family="sans-serif" font-size="12" font-weight="800" fill="white" text-anchor="middle">!</text>
+
+  <!-- App title -->
+  <text x="228" y="138"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+    font-size="60" font-weight="800" fill="white" letter-spacing="-2">
+    Tweakers Monitor
+  </text>
+
+  <!-- Tagline -->
+  <text x="230" y="176"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+    font-size="21" fill="#9a7040" letter-spacing="0.2">
+    Nooit meer een deal missen op V&amp;A
+  </text>
+
+  <!-- Pills -->
+  <rect x="230" y="205" width="96"  height="26" rx="13" fill="#e8770e" fill-opacity="0.2" stroke="#e8770e" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="278" y="223" font-family="'Segoe UI',sans-serif" font-size="12" fill="#ffaa55" text-anchor="middle" font-weight="600">Python 3.12</text>
+
+  <rect x="334" y="205" width="68"  height="26" rx="13" fill="#e8770e" fill-opacity="0.2" stroke="#e8770e" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="368" y="223" font-family="'Segoe UI',sans-serif" font-size="12" fill="#ffaa55" text-anchor="middle" font-weight="600">Flask</text>
+
+  <rect x="410" y="205" width="74"  height="26" rx="13" fill="#e8770e" fill-opacity="0.2" stroke="#e8770e" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="447" y="223" font-family="'Segoe UI',sans-serif" font-size="12" fill="#ffaa55" text-anchor="middle" font-weight="600">Docker</text>
+
+  <rect x="492" y="205" width="74"  height="26" rx="13" fill="#e8770e" fill-opacity="0.2" stroke="#e8770e" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="529" y="223" font-family="'Segoe UI',sans-serif" font-size="12" fill="#ffaa55" text-anchor="middle" font-weight="600">SQLite</text>
+
+  <rect x="574" y="205" width="100" height="26" rx="13" fill="#e8770e" fill-opacity="0.2" stroke="#e8770e" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="624" y="223" font-family="'Segoe UI',sans-serif" font-size="12" fill="#ffaa55" text-anchor="middle" font-weight="600">Dark mode</text>
+</svg>

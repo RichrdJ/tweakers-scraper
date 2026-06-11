@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.dash_title }} — Tweakers Monitor{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 fw-bold mb-0">{{ t.dash_title }}</h1>
+</div>
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-icon text-warning"><i class="bi bi-search"></i></div>
+      <div class="stat-value">{{ active_count }}</div>
+      <div class="text-muted small">{{ t.dash_active }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-icon" style="color:var(--tw-orange)"><i class="bi bi-collection"></i></div>
+      <div class="stat-value">{{ total_items }}</div>
+      <div class="text-muted small">{{ t.dash_total }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-icon text-success"><i class="bi bi-calendar-check"></i></div>
+      <div class="stat-value">{{ today_items }}</div>
+      <div class="text-muted small">{{ t.dash_today }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent items -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="fw-semibold mb-3">{{ t.dash_recent }}</h5>
+
+    {% if not items %}
+      <p class="text-muted text-center py-4 mb-0">{{ t.dash_no_items }}</p>
+    {% else %}
+      <div class="row g-3">
+        {% for item in items %}
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+          <a href="{{ item.item_url }}" target="_blank" rel="noopener"
+             class="text-decoration-none text-body">
+            <div class="card item-card h-100">
+              {% if item.image_url %}
+                <img src="{{ item.image_url }}" class="item-thumb" alt="" loading="lazy">
+              {% else %}
+                <div class="item-thumb-placeholder"><i class="bi bi-cpu"></i></div>
+              {% endif %}
+              <div class="card-body p-2">
+                <div class="d-flex gap-1 flex-wrap mb-1">
+                  <span class="badge badge-search text-white" style="font-size:.65rem">{{ item.search_name }}</span>
+                  {% if item.reserved %}
+                  <span class="badge badge-reserved text-white">{{ t.dash_reserved }}</span>
+                  {% endif %}
+                </div>
+                <p class="small fw-semibold mb-1 lh-sm" style="
+                    display:-webkit-box;-webkit-line-clamp:2;
+                    -webkit-box-orient:vertical;overflow:hidden">
+                  {{ item.title }}
+                </p>
+                <div class="item-price">{{ item.price or '—' }}</div>
+                {% if item.city %}
+                  <div class="text-muted" style="font-size:.72rem">
+                    <i class="bi bi-geo-alt-fill me-1"></i>{{ item.city }}
+                    {% if item.seller %} · {{ item.seller }}{% endif %}
+                  </div>
+                {% endif %}
+                <div class="text-muted mt-1" style="font-size:.68rem">
+                  {{ item.first_seen | time_ago }}
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Live log -->
+<div class="card">
+  <div class="card-body">
+    <h5 class="fw-semibold mb-3">{{ t.dash_live_log }}</h5>
+    <div class="log-box" id="log-box"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var noLogs = {{ t.dash_no_logs | tojson }};
+  var logBox = document.getElementById('log-box');
+  var atBottom = true;
+
+  logBox.addEventListener('scroll', function () {
+    atBottom = logBox.scrollTop + logBox.clientHeight >= logBox.scrollHeight - 10;
+  });
+
+  function renderLogs(logs) {
+    if (!logs.length) {
+      logBox.innerHTML = '<span class="text-muted">' + noLogs + '</span>';
+      return;
+    }
+    var html = logs.map(function(e) {
+      return '<span class="log-' + e.level + '">[' + e.time + '] ' +
+        e.level.padEnd(7) + ' ' +
+        e.message.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
+    }).join('\n');
+    logBox.innerHTML = html;
+    if (atBottom) logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  function fetchLogs() {
+    fetch('/api/logs').then(function(r){ return r.json(); }).then(renderLogs);
+  }
+
+  fetchLogs();
+  setInterval(fetchLogs, 5000);
+</script>
+{% endblock %}

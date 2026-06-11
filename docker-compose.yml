@@ -1,0 +1,13 @@
+services:
+  tweakers-monitor:
+    image: ghcr.io/richrdj/tweakers-scraper:latest
+    pull_policy: always
+    container_name: tweakers-monitor
+    ports:
+      - "8001:8000"
+    volumes:
+      - tw_data:/data
+    restart: unless-stopped
+
+volumes:
+  tw_data:
